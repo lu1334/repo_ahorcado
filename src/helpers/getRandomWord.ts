@@ -6,7 +6,9 @@ let words: string[] = [
     'ANIMAL',
     'VETERINARIO',
     'CELULAR',
-    'TELEFONO'
+    'TELEFONO',
+    'AVION',
+    'HELICOPTERO'
 ];
 
 
