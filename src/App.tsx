@@ -6,6 +6,10 @@ import { hiddenLetter } from "./helpers/hiddenLetter";
 import "./App.css";
 
 function App() {
+  const [time, setTime] = useState(()=>{
+    const dataTime = localStorage.getItem("time")
+    return Number(dataTime)?? 0
+  });
   const [word, setWord] = useState(() => {
     const datos = localStorage.getItem("word");
     return datos ?? getRandomWord();
@@ -48,7 +52,19 @@ function App() {
   useEffect(() => {
     localStorage.setItem("letterStatus", JSON.stringify(letterStatus));
   }, [letterStatus]);
+ //Guardar tiempo de jugado 
+  useEffect(() => {
+    localStorage.setItem("time", JSON.stringify(time));
+  }, [time]);
 
+
+  //cronometro de tiempo de juego 
+  useEffect (()=>{
+    const interval = setInterval(()=>{
+      setTime((prev)=>prev + 1)
+    },1000)
+    return clearInterval(interval)
+  },[])
 
 
   // Determinar si la persona perdió
@@ -90,20 +106,21 @@ function App() {
 
   const newGame = () => {
     const newWord = getRandomWord();
-
+    
     setWord(newWord);
     setHiddenWord("_ ".repeat(newWord.length));
 
     setAttempts(0);
     setLose(false);
     setWon(false);
+    setLetterStatus({}) // reiniciamos el objeto nuevamente
   };
 
   return (
     <div className="App">
       {/* Imágenes */}
       <HangImage imageNumber={attempts} />
-
+       <h2>{time}</h2>
       {/* Palabra oculta */}
       <h3>{hiddenWord}</h3>
 
