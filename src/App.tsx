@@ -2,15 +2,41 @@ import { useEffect, useState } from "react";
 import { HangImage } from "./components/HangImage";
 import { letters } from "./helpers/letters";
 import { getRandomWord } from "./helpers/getRandomWord";
-
+import { hiddenLetter } from "./helpers/hiddenLetter";
 import "./App.css";
 
 function App() {
-  const [word, setWord] = useState(getRandomWord());
-  const [hiddenWord, setHiddenWord] = useState("_ ".repeat(word.length));
-  const [attempts, setAttempts] = useState(0);
+  const [word, setWord] = useState(()=>{
+    const datos = localStorage.getItem("word") 
+    return datos ??getRandomWord()
+  });
+  const [hiddenWord, setHiddenWord] = useState(()=>{
+    const datosHiddenWord = localStorage.getItem("hiddenWord")
+    return datosHiddenWord ?? hiddenLetter(word)
+  });
+  const [attempts, setAttempts] = useState(()=>{
+    const datosAttempts = Number(localStorage.getItem("attempts"))
+    return datosAttempts ?? 0
+  });
   const [lose, setLose] = useState(false);
   const [won, setWon] = useState(false);
+
+
+  //Guardar palabra en localStorage
+  useEffect (()=>{
+      localStorage.setItem("word",word)
+  },[word])
+  
+  //Guardar el numero de intentos
+  useEffect (()=>{
+      localStorage.setItem("attempts",JSON.stringify(attempts))
+  },[attempts])
+
+  //Guardar letras aceptadas hasta el momento
+   useEffect (()=>{
+      localStorage.setItem("hiddenWord",hiddenWord)
+  },[hiddenWord])
+
 
   // Determinar si la persona perdió
   useEffect(() => {
@@ -30,8 +56,7 @@ function App() {
 
   const checkLetter = (letter: string) => {
     if (lose || won) return;
-    //if ( won ) return; (cambie esta linea porque la que he puesto es mas directa y ahorra
-    //codigo)
+  
 
     if (!word.includes(letter)) {
       setAttempts(Math.min(attempts + 1, 9));
