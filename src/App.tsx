@@ -21,12 +21,13 @@ function App() {
   const [lose, setLose] = useState(false);
   const [won, setWon] = useState(false);
 
+  const [letterStatus, setLetterStatus] = useState<Record<string, "correct" | "wrong" | undefined>>({});// prueba
 
   //Guardar palabra en localStorage
   useEffect (()=>{
       localStorage.setItem("word",word)
   },[word])
-  
+
   //Guardar el numero de intentos
   useEffect (()=>{
       localStorage.setItem("attempts",JSON.stringify(attempts))
@@ -58,8 +59,10 @@ function App() {
     if (lose || won) return;
   
 
-    if (!word.includes(letter)) {
+    if (!word.includes(letter)) { // no ha acertado la letra 
       setAttempts(Math.min(attempts + 1, 9));
+
+      setLetterStatus(prev=>({...prev,[letter]:"wrong"}))
       return;
     }
 
@@ -71,6 +74,7 @@ function App() {
       }
     }
     setHiddenWord(hiddenWordArray.join(" "));
+    setLetterStatus(prev=>({...prev,[letter]:"correct"}))
   };
 
   const newGame = () => {
@@ -103,7 +107,7 @@ function App() {
 
       {/* Botones de letras */}
       {letters.map((letter) => (
-        <button onClick={() => checkLetter(letter)} key={letter}>
+        <button onClick={() => checkLetter(letter)} key={letter} >
           {letter}
         </button>
       ))}
