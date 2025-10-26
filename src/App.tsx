@@ -23,8 +23,12 @@ function App() {
 
   const [letterStatus, setLetterStatus] = useState<
     Record<string, "correct" | "wrong" | undefined>
-  >({}); // he creado esto objeto para luego poder darle estilos al
+  >(()=>{
+    const datosletterStatus = localStorage.getItem("letterStatus")
+    return datosletterStatus? JSON.parse(datosletterStatus):{}
+  }); // he creado esto objeto para luego poder darle estilos al
   //boton de las letras segun acierte un color o falle otro color
+  //y lo guardo en localStorage
 
   //Guardar palabra en localStorage
   useEffect(() => {
@@ -40,6 +44,12 @@ function App() {
   useEffect(() => {
     localStorage.setItem("hiddenWord", hiddenWord);
   }, [hiddenWord]);
+  //Guardar objeto 
+  useEffect(() => {
+    localStorage.setItem("letterStatus", JSON.stringify(letterStatus));
+  }, [letterStatus]);
+
+
 
   // Determinar si la persona perdió
   useEffect(() => {
