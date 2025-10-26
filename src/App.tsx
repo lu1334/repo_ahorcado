@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HangImage } from "./components/HangImage";
 import { letters } from "./helpers/letters";
 import { getRandomWord } from "./helpers/getRandomWord";
@@ -6,128 +6,140 @@ import { hiddenLetter } from "./helpers/hiddenLetter";
 import "./App.css";
 
 function App() {
-  const [time, setTime] = useState(()=>{
-    const dataTime = localStorage.getItem("time")
-    return Number(dataTime)?? 0
+  const [time, setTime] = useState(() => {
+    const dataTime = localStorage.getItem("time");
+    return dataTime ? Number(dataTime) : 0;
   });
+
   const [word, setWord] = useState(() => {
     const datos = localStorage.getItem("word");
     return datos ?? getRandomWord();
   });
+
   const [hiddenWord, setHiddenWord] = useState(() => {
     const datosHiddenWord = localStorage.getItem("hiddenWord");
     return datosHiddenWord ?? hiddenLetter(word);
   });
+
   const [attempts, setAttempts] = useState(() => {
-    const datosAttempts = Number(localStorage.getItem("attempts"));
-    return datosAttempts ?? 0;
+    const datosAttempts = localStorage.getItem("attempts");
+    return datosAttempts ? Number(datosAttempts) : 0;
   });
+
   const [lose, setLose] = useState(false);
   const [won, setWon] = useState(false);
 
   const [letterStatus, setLetterStatus] = useState<
     Record<string, "correct" | "wrong" | undefined>
-  >(()=>{
-    const datosletterStatus = localStorage.getItem("letterStatus")
-    return datosletterStatus? JSON.parse(datosletterStatus):{}
-  }); // he creado esto objeto para luego poder darle estilos al
-  //boton de las letras segun acierte un color o falle otro color
-  //y lo guardo en localStorage
+  >(() => {
+    const datosletterStatus = localStorage.getItem("letterStatus");
+    return datosletterStatus ? JSON.parse(datosletterStatus) : {};
+  });
 
-  //Guardar palabra en localStorage
+  // Ref para el intervalo (no provoca renders)
+  const intervalRef = useRef<number | null>(null);
+
+  // Ref para saber si el cronómetro está corriendo
+  const isRunning = useRef(false);
+
+  // Guardar palabra
   useEffect(() => {
     localStorage.setItem("word", word);
   }, [word]);
 
-  //Guardar el numero de intentos
+  // Guardar el numero de intentos
   useEffect(() => {
     localStorage.setItem("attempts", JSON.stringify(attempts));
   }, [attempts]);
 
-  //Guardar letras aceptadas hasta el momento
+  // Guardar letras descubiertas
   useEffect(() => {
     localStorage.setItem("hiddenWord", hiddenWord);
   }, [hiddenWord]);
-  //Guardar objeto 
+
+  // Guardar estado de las letras
   useEffect(() => {
     localStorage.setItem("letterStatus", JSON.stringify(letterStatus));
   }, [letterStatus]);
- //Guardar tiempo de jugado 
+
+  // Guardar tiempo jugado
   useEffect(() => {
     localStorage.setItem("time", JSON.stringify(time));
   }, [time]);
 
-
-  //cronometro de tiempo de juego 
-  useEffect (()=>{
-    const interval = setInterval(()=>{
-      setTime((prev)=>prev + 1)
-    },1000)
-    return ()=> clearInterval(interval)
-  },[])
-
-
-  // Determinar si la persona perdió
+  // Detener cronómetro cuando gane o pierda
   useEffect(() => {
-    if (attempts >= 9) {
-      setLose(true);
+    if (lose || won) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        isRunning.current = false;
+      }
     }
-  }, [attempts]);
+  }, [lose, won]);
 
-  // Determinar si la persona ganó
-  useEffect(() => {
-    // console.log(hiddenWord); // _ _ _ _ _ _ _ _
-    const currentHiddenWord = hiddenWord.split(" ").join("");
-    if (currentHiddenWord === word) {
-      setWon(true);
+  const startTimer = () => {
+    if (!isRunning.current) {
+      intervalRef.current = window.setInterval(() => {
+        setTime((prev) => prev + 1);
+      }, 1000);
+      isRunning.current = true;
     }
-  }, [hiddenWord]);
+  };
 
   const checkLetter = (letter: string) => {
     if (lose || won) return;
 
-    if (!word.includes(letter)) {
-      // no ha acertado la letra
-      setAttempts(Math.min(attempts + 1, 9));
+    // Arrancar tiempo cuando pulse primera letra
+    startTimer();
 
+    if (!word.includes(letter)) {
+      setAttempts(Math.min(attempts + 1, 9));
       setLetterStatus((prev) => ({ ...prev, [letter]: "wrong" }));
       return;
     }
-    const hiddenWordArray = hiddenWord.split(" ");
 
+    const hiddenWordArray = hiddenWord.split(" ");
     for (let i = 0; i < word.length; i++) {
       if (word[i] === letter) {
-        hiddenWordArray[i] = letter; //ha acertado la letra
+        hiddenWordArray[i] = letter;
       }
     }
+
     setHiddenWord(hiddenWordArray.join(" "));
     setLetterStatus((prev) => ({ ...prev, [letter]: "correct" }));
   };
 
   const newGame = () => {
     const newWord = getRandomWord();
-    
+
     setWord(newWord);
     setHiddenWord("_ ".repeat(newWord.length));
-
     setAttempts(0);
     setLose(false);
     setWon(false);
-    setLetterStatus({}) // reiniciamos el objeto nuevamente
+    setLetterStatus({});
+    setTime(0);
+
+    // Reiniciar cronómetro
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    isRunning.current = false;
   };
 
   return (
     <div className="App">
+      <h2 style={{ color: "red" }}>Tiempo de Partida</h2>
+      <div className="reloj">{time}</div>
+
       {/* Imágenes */}
       <HangImage imageNumber={attempts} />
-       <h2>{time}</h2>
+
       {/* Palabra oculta */}
       <h3>{hiddenWord}</h3>
 
       {/* Contador de intentos */}
       <h3>Intentos: {attempts} </h3>
 
-      {/* Mensaje si peridó */}
+      {/* Mensaje si perdió */}
       {lose ? <h2>Perdió {word}!</h2> : ""}
 
       {/* Mensaje si ganó */}
@@ -152,7 +164,7 @@ function App() {
 
       <br />
       <br />
-      <button onClick={newGame}>¿Nuevo juego?</button>
+      <button onClick={newGame}>¿Reiniciar Partida?</button>
     </div>
   );
 }
