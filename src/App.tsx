@@ -6,38 +6,40 @@ import { hiddenLetter } from "./helpers/hiddenLetter";
 import "./App.css";
 
 function App() {
-  const [word, setWord] = useState(()=>{
-    const datos = localStorage.getItem("word") 
-    return datos ??getRandomWord()
+  const [word, setWord] = useState(() => {
+    const datos = localStorage.getItem("word");
+    return datos ?? getRandomWord();
   });
-  const [hiddenWord, setHiddenWord] = useState(()=>{
-    const datosHiddenWord = localStorage.getItem("hiddenWord")
-    return datosHiddenWord ?? hiddenLetter(word)
+  const [hiddenWord, setHiddenWord] = useState(() => {
+    const datosHiddenWord = localStorage.getItem("hiddenWord");
+    return datosHiddenWord ?? hiddenLetter(word);
   });
-  const [attempts, setAttempts] = useState(()=>{
-    const datosAttempts = Number(localStorage.getItem("attempts"))
-    return datosAttempts ?? 0
+  const [attempts, setAttempts] = useState(() => {
+    const datosAttempts = Number(localStorage.getItem("attempts"));
+    return datosAttempts ?? 0;
   });
   const [lose, setLose] = useState(false);
   const [won, setWon] = useState(false);
 
-  const [letterStatus, setLetterStatus] = useState<Record<string, "correct" | "wrong" | undefined>>({});// prueba
+  const [letterStatus, setLetterStatus] = useState<
+    Record<string, "correct" | "wrong" | undefined>
+  >({}); // he creado esto objeto para luego poder darle estilos al
+  //boton de las letras segun acierte un color o falle otro color
 
   //Guardar palabra en localStorage
-  useEffect (()=>{
-      localStorage.setItem("word",word)
-  },[word])
+  useEffect(() => {
+    localStorage.setItem("word", word);
+  }, [word]);
 
   //Guardar el numero de intentos
-  useEffect (()=>{
-      localStorage.setItem("attempts",JSON.stringify(attempts))
-  },[attempts])
+  useEffect(() => {
+    localStorage.setItem("attempts", JSON.stringify(attempts));
+  }, [attempts]);
 
   //Guardar letras aceptadas hasta el momento
-   useEffect (()=>{
-      localStorage.setItem("hiddenWord",hiddenWord)
-  },[hiddenWord])
-
+  useEffect(() => {
+    localStorage.setItem("hiddenWord", hiddenWord);
+  }, [hiddenWord]);
 
   // Determinar si la persona perdió
   useEffect(() => {
@@ -57,24 +59,23 @@ function App() {
 
   const checkLetter = (letter: string) => {
     if (lose || won) return;
-  
 
-    if (!word.includes(letter)) { // no ha acertado la letra 
+    if (!word.includes(letter)) {
+      // no ha acertado la letra
       setAttempts(Math.min(attempts + 1, 9));
 
-      setLetterStatus(prev=>({...prev,[letter]:"wrong"}))
+      setLetterStatus((prev) => ({ ...prev, [letter]: "wrong" }));
       return;
     }
-
     const hiddenWordArray = hiddenWord.split(" ");
 
     for (let i = 0; i < word.length; i++) {
       if (word[i] === letter) {
-        hiddenWordArray[i] = letter;
+        hiddenWordArray[i] = letter; //ha acertado la letra
       }
     }
     setHiddenWord(hiddenWordArray.join(" "));
-    setLetterStatus(prev=>({...prev,[letter]:"correct"}))
+    setLetterStatus((prev) => ({ ...prev, [letter]: "correct" }));
   };
 
   const newGame = () => {
@@ -107,7 +108,17 @@ function App() {
 
       {/* Botones de letras */}
       {letters.map((letter) => (
-        <button onClick={() => checkLetter(letter)} key={letter} >
+        <button
+          onClick={() => checkLetter(letter)}
+          key={letter}
+          className={
+            letterStatus[letter] === "correct"
+              ? "btn green"
+              : letterStatus[letter] === "wrong"
+              ? "btn red"
+              : "none"
+          }
+        >
           {letter}
         </button>
       ))}
