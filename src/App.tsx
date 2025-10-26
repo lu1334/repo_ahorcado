@@ -63,7 +63,7 @@ function App() {
     const interval = setInterval(()=>{
       setTime((prev)=>prev + 1)
     },1000)
-    return clearInterval(interval)
+    return ()=> clearInterval(interval)
   },[])
 
 
