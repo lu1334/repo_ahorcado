@@ -38,7 +38,7 @@ function App() {
 
   // Ref para el intervalo (no provoca renders)
   const intervalRef = useRef<number | null>(null);
-
+  
   // Ref para saber si el cronómetro está corriendo
   const isRunning = useRef(false);
 
